@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weekly Meal Menu</title>
+<style>
+  :root {
+    --bg: #FBF7EF;
+    --panel: #FFFFFF;
+    --ink: #2A2B24;
+    --muted: #8A8C7E;
+    --line: #E6E1D3;
+    --accent: #4F7359;
+    --accent-soft: #E7EEE4;
+    --highlight: #D9A441;
+    --highlight-soft: #FBF0DA;
+    --today: #F3E9D2;
+    --shadow: 0 1px 2px rgba(42,43,36,.04), 0 4px 14px rgba(42,43,36,.05);
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1B1C17; --panel: #232420; --ink: #EFEBDF; --muted: #9B9C8E;
+      --line: #34362D; --accent: #8FB89A; --accent-soft: #283028;
+      --highlight: #E3B45C; --highlight-soft: #332B18; --today: #3A331F;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1B1C17; --panel: #232420; --ink: #EFEBDF; --muted: #9B9C8E;
+    --line: #34362D; --accent: #8FB89A; --accent-soft: #283028;
+    --highlight: #E3B45C; --highlight-soft: #332B18; --today: #3A331F;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .ui { font-family: system-ui, -apple-system, sans-serif; }
+  header {
+    padding: 36px 24px 20px;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0;
+  }
+  .whoami-wrap { position: relative; display: inline-block; margin-top: 16px; }
+  .whoami {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--accent-soft);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--accent);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .whoami .chev { font-size: 10px; opacity: .75; }
+  .account-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 220px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 8px;
+    z-index: 20;
+    display: none;
+  }
+  .account-menu.open { display: block; }
+  .account-menu .person {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .account-menu .person:hover { background: var(--accent-soft); }
+  .account-menu .person.active { background: var(--accent-soft); font-weight: 600; }
+  .account-menu .person .name { flex: 1; }
+  .account-menu .person .del-person {
+    border: none; background: transparent; color: var(--muted);
+    font-size: 14px; cursor: pointer; padding: 2px 4px; line-height: 1;
+  }
+  .account-menu .person .del-person:hover { color: #C0524A; }
+  .account-menu .divider { height: 1px; background: var(--line); margin: 6px 4px; }
+  .account-menu .add-person {
+    display: flex; gap: 6px; padding: 6px 4px 2px;
+  }
+  .account-menu .add-person input {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 7px 9px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .account-menu .add-person button {
+    border: none;
+    background: var(--accent);
+    color: #FBF7EF;
+    border-radius: 7px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .who-tag { font-size: 12px; color: var(--muted); font-weight: 500; }
+  main {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px 70px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 880px) {
+    main { grid-template-columns: 1.7fr 1fr; align-items: start; }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .card-head h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+  }
+  .notice {
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--highlight-soft);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    line-height: 1.5;
+    grid-column: 1 / -1;
+  }
+  /* menu grid */
+  .grid-body { padding: 8px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 1040px; table-layout: fixed; }
+  th, td { padding: 0; }
+  th {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+    padding: 10px 8px 6px;
+    width: 132px;
+  }
+  th:first-child, td.meal-label-cell { width: 92px; }
+  th.today-col { color: var(--accent); }
+  .meal-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    padding: 10px 10px 0 8px;
+    white-space: nowrap;
+    width: 88px;
+  }
+  td.day-cell { padding: 3px; }
+  td.today-cell .day-box { background: var(--today); }
+  .day-box {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    transition: border-color .15s;
+  }
+  .day-box:focus-within { border-color: var(--accent); }
+  textarea {
+    width: 100%;
+    min-height: 74px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 9px 10px;
+    resize: vertical;
+    border-radius: 8px;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+  textarea:focus { outline: none; }
+  textarea::placeholder { color: var(--muted); }
+
+  /* shopping list */
+  .add-row {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .add-row input[type="text"] {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .add-row input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .add-row button {
+    border: none;
+    background: var(--accent);
+    color: #FBF7EF;
+    border-radius: 8px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .shop-groups {
+    margin: 0;
+    padding: 4px 10px 14px;
+    height: 520px;
+    overflow-y: auto;
+  }
+  .shop-group + .shop-group { margin-top: 4px; }
+  .group-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--accent);
+    padding: 14px 10px 4px;
+  }
+  .shop-group ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .shop-group li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+  }
+  .shop-group li:hover { background: var(--accent-soft); }
+  .shop-group input[type="checkbox"] {
+    width: 18px; height: 18px;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+  .shop-group .item-text {
+    flex: 1;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .shop-group li.done .item-text {
+    color: var(--muted);
+    text-decoration: line-through;
+  }
+  .shop-group .del {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1;
+  }
+  .shop-group .del:hover { color: #C0524A; }
+  .empty-hint {
+    padding: 20px;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: -6px;
+  }
+  button.primary {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 22px;
+    border-radius: 9px;
+    border: none;
+    background: var(--accent);
+    color: #FBF7EF;
+    cursor: pointer;
+  }
+  button.ghost {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button.ghost.small {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 7px;
+  }
+  .status { font-size: 13px; color: var(--muted); }
+  .cost-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 14px 20px;
+    border-top: 1px solid var(--line);
+    background: var(--accent-soft);
+  }
+  .cost-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--accent); }
+  .cost-total { font-size: 24px; font-weight: 600; margin-left: 10px; font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
+  .cost-note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .cost-detail { padding: 0 20px 14px; font-size: 13px; background: var(--accent-soft); }
+  .cost-detail summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 4px 0 8px; }
+  .cost-line { display: flex; gap: 10px; padding: 4px 0; border-top: 1px solid var(--line); }
+  .cost-line .c-item { flex: 1; font-weight: 600; }
+  .cost-line .c-buy { flex: 1; color: var(--muted); }
+  .cost-line .c-price { width: 64px; text-align: right; }
+  .c-src { font-size: 10px; font-weight: 700; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: var(--accent); color: #FBF7EF; vertical-align: middle; }
+  .c-src.est { background: var(--highlight-soft); color: var(--ink); border: 1px solid var(--line); }
+  .shop-hint { font-size: 12px; color: var(--muted); padding: 8px 20px 0; }
+  .shop-status { font-size: 12px; color: var(--accent); padding: 4px 20px 0; min-height: 18px; }
+  .suggestions { grid-column: 1 / -1; }
+  .suggestions .card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .sugg-sub { font-size: 13px; color: var(--muted); margin: 4px 0 0; font-weight: 400; }
+  .sugg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 14px;
+    padding: 16px 20px 20px;
+  }
+  .sugg-card {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--bg);
+  }
+  .sugg-card h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; font-weight: 600;
+    background: var(--accent-soft); color: var(--accent);
+    padding: 3px 8px; border-radius: 10px;
+  }
+  .chip.cost { background: var(--highlight-soft); color: var(--ink); }
+  .sugg-ing { font-size: 13px; color: var(--muted); line-height: 1.45; flex: 1; }
+  .sugg-add { display: flex; gap: 6px; }
+  .sugg-add select {
+    flex: 1; min-width: 0;
+    border: 1px solid var(--line); border-radius: 7px;
+    padding: 6px; font-size: 12px; font-family: inherit;
+    background: var(--panel); color: var(--ink);
+  }
+  .sugg-add button {
+    border: none; background: var(--accent); color: #FBF7EF;
+    border-radius: 7px; padding: 0 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+  }
+</style>
+</head>
+<body class="ui">
+<header>
+  <h1 style="font-family: 'Iowan Old Style','Palatino Linotype',Georgia,serif;">Weekly Menu</h1>
+  <p class="sub">Write down a meal and the ingredients land in your shopping list on their own.</p>
+  <div class="whoami-wrap">
+    <button type="button" class="whoami" id="accountBtn">
+      <span id="whoamiLabel">Loading…</span><span class="chev">▾</span>
+    </button>
+    <div class="account-menu" id="accountMenu">
+      <div id="personList"></div>
+      <div class="divider"></div>
+      <form class="add-person" id="addPersonForm">
+        <input type="text" id="personInput" placeholder="Person's name…" autocomplete="off">
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+</header>
+<main>
+  <div class="notice" id="notice" style="display:none;"></div>
+
+  <section class="card" id="menuCard">
+    <div class="card-head"><h2>Your menu <span class="who-tag ui" id="menuWho"></span></h2></div>
+    <div class="grid-body"><table id="grid"></table></div>
+    <div class="cost-bar ui">
+      <div>
+        <span class="cost-label">Estimated cost</span><span class="cost-total" id="costTotal">—</span>
+        <div class="cost-note" id="costNote">Updates by itself. Counts only the ingredients you haven't ticked, whole packs, Aldi prices.</div>
+      </div>
+      <button type="button" class="ghost small" id="costBtn">Estimate cost</button>
+    </div>
+    <div class="cost-detail ui" id="costDetail"></div>
+  </section>
+
+  <section class="card" id="shopCard">
+    <div class="card-head" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+      <h2>Shopping list <span class="who-tag ui" id="shopWho"></span></h2>
+      <button type="button" class="ghost small" id="clearShopBtn">Clear list</button>
+    </div>
+    <form class="add-row" id="addForm">
+      <input type="text" id="itemInput" placeholder="Add an ingredient…" autocomplete="off">
+      <button type="submit">Add</button>
+    </form>
+    <div class="shop-hint ui">Tick what you already have or bought: ticked items are not counted in the cost.</div>
+    <div class="shop-status ui" id="shopStatus"></div>
+    <div id="shopList" class="shop-groups"></div>
+  </section>
+
+  <section class="card suggestions" id="suggCard">
+    <div class="card-head">
+      <div>
+        <h2>Suggestions</h2>
+        <p class="sugg-sub ui">Cheap, quick dishes with few ingredients.</p>
+      </div>
+      <button type="button" class="ghost small" id="suggBtn">Get ideas</button>
+    </div>
+    <div class="sugg-grid" id="suggGrid">
+      <div class="empty-hint" style="grid-column:1/-1;">Press "Get ideas" to see easy, low-cost dishes.</div>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="primary" id="saveBtn">Save all</button>
+    <button class="ghost" id="clearBtn" type="button">Clear week</button>
+    <span class="status ui" id="status"></span>
+  </div>
+</main>
+
+<script>
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const MEALS = ["Lunch","Dinner"];
+function getTodayIdx() { return (new Date().getDay() + 6) % 7; }
+let todayIdx = getTodayIdx();
+
+// ---- AI settings (Google Gemini, free tier) ----
+// Get a free key at https://aistudio.google.com/app/apikey
+// Paste it below, or leave it empty and the page will ask you once (it is then kept in your browser).
+const GEMINI_API_KEY = "AQ.Ab8RN6JvTr5fV1xc7CMZfin-OC9IHS2gKB4qvUBZzcaGBn4pKQ";
+// Free-tier models, tried in order. If one returns 404 (not available for new keys), the next one is used.
+const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash-lite"];
+
+function getApiKey() {
+  if (GEMINI_API_KEY) return GEMINI_API_KEY;
+  let k = localStorage.getItem("gemini-key");
+  if (!k) {
+    k = (prompt("Paste your free Gemini API key (get it at aistudio.google.com/app/apikey):") || "").trim();
+    if (k) localStorage.setItem("gemini-key", k);
+  }
+  return k;
+}
+
+async function askGemini(promptText, opts) {
+  opts = opts || {};
+  const key = getApiKey();
+  if (!key) throw new Error("Missing API key");
+  let lastStatus = 0;
+  for (const model of GEMINI_MODELS) {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        generationConfig: Object.assign({ responseMimeType: "application/json" }, opts.temperature !== undefined ? { temperature: opts.temperature } : {})
+      })
+    });
+    if (res.status === 404 || res.status === 429 || res.status === 503) { lastStatus = res.status; continue; } // unavailable or rate-limited: try the next model
+    if (!res.ok) {
+      if (res.status === 400 || res.status === 403) localStorage.removeItem("gemini-key");
+      throw new Error("HTTP " + res.status);
+    }
+    const data = await res.json();
+    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content.parts) || [];
+    const txt = parts.map(p => p.text || "").join("") || "[]";
+    return JSON.parse(txt.replace(/```json|```/g, "").trim());
+  }
+  throw new Error("HTTP " + lastStatus + ": no free model available, update GEMINI_MODELS");
+}
+// -------------------------------------------------
+let state = { profiles: [], activeId: null, data: {} };
+
+function emptyWeek() {
+  const m = {};
+  DAYS.forEach(d => { m[d] = {}; MEALS.forEach(meal => m[d][meal] = ""); });
+  return m;
+}
+function emptyProfileData() { return { week: emptyWeek(), shopping: [], mealMeta: {} }; }
+function makeId() { return Date.now() + "-" + Math.random().toString(36).slice(2, 7); }
+function active() { return state.data[state.activeId]; }
+function activeName() {
+  const p = state.profiles.find(p => p.id === state.activeId);
+  return p ? p.name : "";
+}
+
+function refreshWhoUI() {
+  document.getElementById("whoamiLabel").textContent = "👤 " + (activeName() || "…");
+  document.getElementById("menuWho").textContent = "· " + activeName();
+  document.getElementById("shopWho").textContent = "· " + activeName();
+}
+
+function buildPersonList() {
+  const list = document.getElementById("personList");
+  list.innerHTML = "";
+  state.profiles.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "person" + (p.id === state.activeId ? " active" : "");
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = p.name;
+    row.appendChild(name);
+    if (state.profiles.length > 1) {
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "del-person";
+      del.textContent = "✕";
+      del.title = "Remove person";
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeProfile(p.id);
+      });
+      row.appendChild(del);
+    }
+    row.addEventListener("click", () => switchProfile(p.id));
+    list.appendChild(row);
+  });
+}
+
+function switchProfile(id) {
+  if (id === state.activeId) { closeAccountMenu(); return; }
+  state.activeId = id;
+  refreshWhoUI();
+  buildPersonList();
+  buildGrid();
+  buildShopList();
+  closeAccountMenu();
+  setStatus("You're now viewing " + activeName() + "'s menu.");
+}
+
+function addProfile(name) {
+  const id = makeId();
+  state.profiles.push({ id, name });
+  state.data[id] = emptyProfileData();
+  state.activeId = id;
+  refreshWhoUI();
+  buildPersonList();
+  buildGrid();
+  buildShopList();
+  closeAccountMenu();
+  setStatus("Person added. Remember to save.");
+}
+
+function removeProfile(id) {
+  if (state.profiles.length <= 1) return;
+  state.profiles = state.profiles.filter(p => p.id !== id);
+  delete state.data[id];
+  if (state.activeId === id) state.activeId = state.profiles[0].id;
+  refreshWhoUI();
+  buildPersonList();
+  buildGrid();
+  buildShopList();
+  setStatus("Person removed. Remember to save.");
+}
+
+function openAccountMenu() { document.getElementById("accountMenu").classList.add("open"); }
+function closeAccountMenu() { document.getElementById("accountMenu").classList.remove("open"); }
+
+function buildGrid() {
+  const table = document.getElementById("grid");
+  table.innerHTML = "";
+  const headRow = document.createElement("tr");
+  headRow.appendChild(document.createElement("th"));
+  DAYS.forEach((d, i) => {
+    const th = document.createElement("th");
+    th.textContent = d;
+    if (i === todayIdx) th.classList.add("today-col");
+    headRow.appendChild(th);
+  });
+  table.appendChild(headRow);
+
+  MEALS.forEach(meal => {
+    const row = document.createElement("tr");
+    const label = document.createElement("td");
+    label.className = "meal-label meal-label-cell";
+    label.textContent = meal;
+    row.appendChild(label);
+    DAYS.forEach((d, i) => {
+      const cell = document.createElement("td");
+      cell.className = "day-cell" + (i === todayIdx ? " today-cell" : "");
+      const box = document.createElement("div");
+      box.className = "day-box";
+      const ta = document.createElement("textarea");
+      ta.placeholder = "…";
+      ta.value = (active().week[d] && active().week[d][meal]) || "";
+      let typingTimer = null;
+      ta.addEventListener("input", () => {
+        if (!active().week[d]) active().week[d] = {};
+        active().week[d][meal] = ta.value;
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => handleMealBlur(d, meal, ta.value), 3000);
+      });
+      ta.addEventListener("blur", () => { clearTimeout(typingTimer); handleMealBlur(d, meal, ta.value); });
+      box.appendChild(ta);
+      cell.appendChild(box);
+      row.appendChild(cell);
+    });
+    table.appendChild(row);
+  });
+}
+
+function buildShopList() {
+  renderCost();
+  const container = document.getElementById("shopList");
+  container.innerHTML = "";
+  const shopping = active().shopping;
+
+  if (!shopping.length) {
+    const div = document.createElement("div");
+    div.className = "empty-hint";
+    div.textContent = "The list is empty. Add something to buy.";
+    container.appendChild(div);
+    return;
+  }
+
+  function renderGroup(label, items) {
+    const group = document.createElement("div");
+    group.className = "shop-group";
+    const heading = document.createElement("div");
+    heading.className = "group-label ui";
+    heading.textContent = label;
+    group.appendChild(heading);
+    const ul = document.createElement("ul");
+    items.forEach(item => ul.appendChild(renderItem(item)));
+    group.appendChild(ul);
+    container.appendChild(group);
+  }
+
+  function renderItem(item) {
+    const li = document.createElement("li");
+    if (item.done) li.classList.add("done");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!item.done;
+    cb.addEventListener("change", () => {
+      item.done = cb.checked;
+      li.classList.toggle("done", cb.checked);
+      renderCost();
+      scheduleCostUpdate();
+    });
+    const span = document.createElement("span");
+    span.className = "item-text";
+    span.textContent = item.text;
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "del";
+    del.textContent = "✕";
+    del.addEventListener("click", () => {
+      active().shopping = active().shopping.filter(i => i.id !== item.id);
+      buildShopList();
+      scheduleCostUpdate();
+    });
+    li.appendChild(cb);
+    li.appendChild(span);
+    li.appendChild(del);
+    return li;
+  }
+
+  let anyGroup = false;
+  DAYS.forEach(day => {
+    MEALS.forEach(meal => {
+      const key = day + "|" + meal;
+      const items = shopping.filter(i => i.source === key);
+      if (items.length) {
+        renderGroup(day + " · " + meal, items);
+        anyGroup = true;
+      }
+    });
+  });
+
+  const other = shopping.filter(i => !i.source);
+  if (other.length) {
+    renderGroup("Other", other);
+    anyGroup = true;
+  }
+
+  if (!anyGroup) {
+    const div = document.createElement("div");
+    div.className = "empty-hint";
+    div.textContent = "The list is empty. Add something to buy.";
+    container.appendChild(div);
+  }
+}
+
+function removeItemsBySource(key) {
+  active().shopping = active().shopping.filter(i => i.source !== key);
+}
+
+// Ingredient generation runs one request at a time (parallel requests trigger Gemini's rate limit)
+let genQueue = Promise.resolve();
+const mealRetries = {};
+
+function handleMealBlur(day, meal, rawText, profArg) {
+  const prof = profArg || active();
+  genQueue = genQueue.then(() => generateForMeal(prof, day, meal, rawText)).catch(() => {});
+  return genQueue;
+}
+
+async function generateForMeal(prof, day, meal, rawText) {
+  const text = rawText.trim();
+  const key = day + "|" + meal;
+  const meta = prof.mealMeta[key];
+  const isActive = () => prof === active();
+
+  if (!text) {
+    if (meta) {
+      prof.shopping = prof.shopping.filter(i => i.source !== key);
+      delete prof.mealMeta[key];
+      if (isActive()) { buildShopList(); scheduleCostUpdate(); }
+    }
+    return;
+  }
+
+  if (meta && meta.text === text) return; // already generated for this text
+
+  setStatus("Generating ingredients for " + day + "'s " + meal.toLowerCase() + "…");
+  try {
+    const prompt = "Analyze this meal and return ONLY a JSON array of the ingredients needed to make it, for one person, with realistic quantities. Exact format: [{\"name\":\"...\",\"quantity\":\"...\"}]. Don't include water, salt, or basic seasonings unless they are central to the recipe. If the text doesn't describe food, return []. Meal: \"" + text + "\"";
+    const result = await askGemini(prompt);
+    const ingredients = Array.isArray(result) ? result : (Array.isArray(result && result.ingredients) ? result.ingredients : []);
+
+    // the cell was edited again while we waited: a newer request will handle it
+    const nowText = (((prof.week[day] || {})[meal]) || "").trim();
+    if (nowText !== text) return;
+
+    prof.shopping = prof.shopping.filter(i => i.source !== key);
+
+    const newIds = [];
+    ingredients.forEach(ing => {
+      const name = (ing && (ing.name || ing.nome || "")).toString().trim();
+      if (!name) return;
+      const quantity = (ing.quantity || ing.quantita || "").toString().trim();
+      const id = makeId();
+      newIds.push(id);
+      prof.shopping.push({
+        id,
+        text: quantity ? (name + " — " + quantity) : name,
+        done: false,
+        source: key
+      });
+    });
+
+    prof.mealMeta[key] = { text, itemIds: newIds };
+    mealRetries[key] = 0;
+    if (isActive()) { buildShopList(); scheduleCostUpdate(); }
+    setStatus(newIds.length ? "Ingredients added to the list ✓" : "No ingredients recognized.");
+  } catch (e) {
+    if (String(e.message).indexOf("429") !== -1) {
+      if ((mealRetries[key] || 0) < 2) {
+        mealRetries[key] = (mealRetries[key] || 0) + 1;
+        setStatus("Gemini's free request limit was reached. Retrying the ingredients in 1 minute…");
+        setTimeout(() => handleMealBlur(day, meal, ((prof.week[day] || {})[meal]) || "", prof), 60000);
+      } else {
+        setStatus("Gemini's free request limit was reached (HTTP 429). Wait a few minutes, then click out of the meal cell again.");
+      }
+    } else {
+      setStatus("Couldn't generate the ingredients (" + e.message + "). Check your API key and try again.");
+    }
+  }
+}
+
+function setStatus(text) {
+  document.getElementById("status").textContent = text;
+  const el = document.getElementById("shopStatus");
+  if (el) el.textContent = text;
+}
+function showNotice(html) {
+  const n = document.getElementById("notice");
+  n.style.display = "block";
+  n.innerHTML = html;
+}
+
+function loadFromLocal() {
+  try {
+    const raw = localStorage.getItem("uni-menu-data");
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function saveToLocal() {
+  try {
+    localStorage.setItem("uni-menu-data", JSON.stringify(state));
+    return true;
+  } catch (e) { return false; }
+}
+
+function applyLoadedOrDefault(loaded, defaultName) {
+  if (loaded && Array.isArray(loaded.profiles) && loaded.profiles.length) {
+    state.profiles = loaded.profiles;
+    state.data = loaded.data || {};
+    state.profiles.forEach(p => { if (!state.data[p.id]) state.data[p.id] = emptyProfileData(); });
+    state.activeId = loaded.activeId && state.data[loaded.activeId] ? loaded.activeId : state.profiles[0].id;
+  } else {
+    const id = makeId();
+    state.profiles = [{ id, name: defaultName }];
+    state.data = { [id]: emptyProfileData() };
+    state.activeId = id;
+  }
+}
+
+async function init() {
+  state = { profiles: [], activeId: null, data: {} };
+
+  applyLoadedOrDefault(loadFromLocal(), "Luca");
+  setStatus("Data is saved in this browser.");
+
+  refreshWhoUI();
+  buildPersonList();
+  buildGrid();
+  buildShopList();
+}
+
+// ---- Cost estimate (Aldi prices via Gemini + Google Search) ----
+const STORE_NAME = "Aldi";
+const STORE_COUNTRY = "United Kingdom"; // change if you shop at Aldi in another country
+const CURRENCY = "GBP";                 // "EUR", "USD"...
+const SYMBOLS = { EUR: "€", GBP: "£", USD: "$" };
+function money(n) { return (SYMBOLS[CURRENCY] || CURRENCY + " ") + n.toFixed(2); }
+
+// only ingredients you still need to buy (unticked) are counted
+function itemsToBuy() { return active().shopping.filter(i => !i.done); }
+function shoppingSignature() {
+  return active().shopping.map(i => (i.done ? "x" : "o") + i.text).sort().join("|");
+}
+
+// Gemini call WITH Google Search, so it can look up real prices
+async function askGeminiGrounded(promptText) {
+  const key = getApiKey();
+  if (!key) throw new Error("Missing API key");
+  let lastStatus = 0;
+  for (const model of GEMINI_MODELS) {
+    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature: 0 }
+      })
+    });
+    if (res.status === 404 || res.status === 429 || res.status === 503) { lastStatus = res.status; continue; }
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    const parts = (data.candidates && data.candidates[0] && data.candidates[0].content.parts) || [];
+    const txt = parts.map(p => p.text || "").join("");
+    const m = txt.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error("no price list in the answer");
+    return JSON.parse(m[0]);
+  }
+  throw new Error("HTTP " + lastStatus);
+}
+
+function renderCostBase() {
+  const totalEl = document.getElementById("costTotal");
+  const noteEl = document.getElementById("costNote");
+  const detailEl = document.getElementById("costDetail");
+  const btn = document.getElementById("costBtn");
+  if (!totalEl) return;
+  const est = active().estimate;
+  detailEl.innerHTML = "";
+  const defaultNote = "Updates by itself. Counts only the ingredients you haven't ticked, whole packs, " + STORE_NAME + " prices.";
+
+  if (!est || !est.lines || !est.lines.length) {
+    totalEl.textContent = "—";
+    noteEl.textContent = defaultNote;
+    btn.textContent = "Estimate cost";
+    return;
+  }
+
+  const fromStore = est.lines.filter(l => l.source === "store").length;
+  totalEl.textContent = money(est.total);
+  btn.textContent = "Update estimate";
+  noteEl.textContent = est.sig !== shoppingSignature()
+    ? "The list changed since this estimate. Press Update."
+    : STORE_NAME + " price found for " + fromStore + " of " + est.lines.length + " items; the rest are estimates.";
+
+  const details = document.createElement("details");
+  const sum = document.createElement("summary");
+  sum.textContent = "See breakdown";
+  details.appendChild(sum);
+  est.lines.forEach(l => {
+    const row = document.createElement("div");
+    row.className = "cost-line";
+    const a = document.createElement("span"); a.className = "c-item"; a.textContent = l.item;
+    const tag = document.createElement("span");
+    tag.className = "c-src" + (l.source === "store" ? "" : " est");
+    tag.textContent = l.source === "store" ? STORE_NAME : "est.";
+    a.appendChild(tag);
+    const b = document.createElement("span"); b.className = "c-buy"; b.textContent = l.buy;
+    const c = document.createElement("span"); c.className = "c-price"; c.textContent = money(l.price);
+    row.appendChild(a); row.appendChild(b); row.appendChild(c);
+    details.appendChild(row);
+  });
+  detailEl.appendChild(details);
+}
+
+let costBusy = false, costTimer = null, costCooldownUntil = 0, costRetries = 0;
+function renderCost() {
+  renderCostBase();
+  const btn = document.getElementById("costBtn");
+  if (!btn) return;
+  btn.disabled = costBusy;
+  if (costBusy) {
+    btn.textContent = "Looking up prices…";
+    document.getElementById("costNote").textContent = "Looking up prices…";
+  } else if (active().estimate) {
+    btn.textContent = "Refresh";
+  }
+}
+// recalculates a moment after the list changes (waits so quick edits are grouped)
+function scheduleCostUpdate() {
+  clearTimeout(costTimer);
+  const delay = Math.max(3000, costCooldownUntil - Date.now());
+  costTimer = setTimeout(() => {
+    if (costBusy) { scheduleCostUpdate(); return; }
+    estimateCost(true);
+  }, delay);
+}
+
+function parseLines(list, forcedSource) {
+  return (Array.isArray(list) ? list : [])
+    .map(l => ({
+      item: String((l && l.item) || "").trim(),
+      buy: String((l && l.buy) || "").trim(),
+      price: Number(String(l && l.price).replace(",", ".")),
+      source: forcedSource || ((l && String(l.source).toLowerCase() === "aldi") ? "store" : "estimate")
+    }))
+    .filter(l => l.item && isFinite(l.price) && l.price >= 0);
+}
+
+async function estimateCost(auto) {
+  const prof = active();
+  const items = prof.shopping.filter(i => !i.done).map(i => i.text);
+  const sigNow = shoppingSignature();
+
+  if (!items.length) {
+    prof.estimate = null;
+    renderCost();
+    if (!auto) setStatus(prof.shopping.length ? "Everything is ticked (already have it), nothing to buy." : "Add some ingredients to the shopping list first.");
+    return;
+  }
+  const old = prof.estimate;
+  // same list as last time and real prices already found: keep the same numbers
+  if (old && old.sig === sigNow && old.lines.some(l => l.source === "store")) {
+    if (!auto) setStatus("Prices are already up to date for this list.");
+    renderCost();
+    return;
+  }
+  if (costBusy) return;
+  costBusy = true;
+  renderCost();
+
+  const listText = "\n- " + items.join("\n- ");
+  const prevLines = (old && old.lines ? old.lines : []).filter(l => l.source === "store");
+  const prevText = prevLines.length
+    ? "\n\nPrices you already found earlier. Keep the SAME product and the SAME price for an item when it still applies; only look up items that are new or whose needed quantity changed:\n" + prevLines.map(l => l.item + " | " + l.buy + " | " + l.price).join("\n")
+    : "";
+
+  const groundedPrompt = `Use Google Search to find the CURRENT shelf prices at ${STORE_NAME} in ${STORE_COUNTRY} (prices in ${CURRENCY}) for the groceries below. Quantities are per meal for the whole week, so the same ingredient may appear several times.
+
+For each ingredient: merge duplicates and add up the weekly quantity; the student cannot buy part of a package, so round UP to the smallest real ${STORE_NAME} pack size (or number of packs) that covers it; then look up the real price of that ${STORE_NAME} product. If you cannot find the real ${STORE_NAME} price, give your best estimate and set source to "estimate".
+
+Return ONLY a JSON array, no other text, in this format: [{"item":"Pasta","buy":"${STORE_NAME} Spaghetti 500 g x1","price":0.69,"source":"aldi"}]
+"price" is a number: the total for everything bought of that item. "source" is "aldi" ONLY if the price came from ${STORE_NAME}'s website or an ${STORE_NAME} price listing, otherwise "estimate".
+
+Shopping list:${listText}${prevText}`;
+
+  const fallbackPrompt = `Estimate the grocery bill for a student shopping at a budget supermarket in ${STORE_COUNTRY}. Quantities are per meal for the whole week, so the same ingredient may appear several times. Merge duplicates, add up the weekly quantity, round UP to the smallest real supermarket pack that covers it (no partial packs) and give a typical price in ${CURRENCY}. Return ONLY a JSON array: [{"item":"Pasta","buy":"1 x 500 g pack","price":0.7}] where price is a number (total for that item).
+
+Shopping list:${listText}`;
+
+  let lines = [];
+  let usedFallback = false;
+  let reason = "";
+  try {
+    lines = parseLines(await askGeminiGrounded(groundedPrompt));
+    if (!lines.length) throw new Error("empty answer");
+  } catch (e) {
+    reason = e.message;
+    usedFallback = true;
+    if (reason.indexOf("429") !== -1) {
+      costCooldownUntil = Date.now() + 60000; // rate limited: do not retry for a minute
+    } else {
+      try {
+        lines = parseLines(await askGemini(fallbackPrompt, { temperature: 0 }), "estimate");
+      } catch (e2) {
+        lines = [];
+        reason = e2.message;
+        if (reason.indexOf("429") !== -1) costCooldownUntil = Date.now() + 60000;
+      }
+    }
+  }
+
+  if (lines.length) {
+    const total = Math.round(lines.reduce((sum, l) => sum + l.price, 0) * 100) / 100;
+    prof.estimate = { total, lines, sig: sigNow };
+    costRetries = 0;
+    setStatus(usedFallback
+      ? "Couldn't look up " + STORE_NAME + " prices (" + reason + "), so these are estimates. Remember to save."
+      : "Prices updated. Remember to save.");
+  } else {
+    setStatus(reason.indexOf("429") !== -1
+      ? "Gemini's free request limit was reached (HTTP 429). Retrying the price automatically in a minute, or press Refresh."
+      : "Couldn't estimate the cost (" + reason + "). Press Refresh to try again.");
+  }
+  costBusy = false;
+  renderCost();
+  if (!lines.length && reason.indexOf("429") !== -1 && costRetries < 2) { costRetries++; scheduleCostUpdate(); }
+  // the list may have changed while we were looking up prices
+  if (active() === prof && prof.estimate && shoppingSignature() !== prof.estimate.sig) scheduleCostUpdate();
+}
+document.getElementById("costBtn").addEventListener("click", () => estimateCost(false));
+// -----------------------
+
+let seenSuggestions = [];
+
+async function loadSuggestions() {
+  const btn = document.getElementById("suggBtn");
+  const grid = document.getElementById("suggGrid");
+  btn.disabled = true;
+  btn.textContent = "Thinking…";
+  try {
+    const avoid = seenSuggestions.slice(-20).join(", ");
+    const promptText = "Suggest 6 dishes for a university student cooking alone. Rules: very cheap (about 1-3 euros per serving), easy to make (max 30 minutes, only basic kitchen equipment, no special skills), and at most 6 simple ingredients each. Every ingredient must be a string that includes a realistic quantity for ONE person, for example \"100 g pasta\" or \"2 eggs\". Vary the dishes (pasta, rice, eggs, legumes, vegetables, etc.). The student has VERY LITTLE FRIDGE SPACE: strongly prefer ingredients that keep at room temperature or in the freezer (pasta, rice, couscous, oats, bread, canned or dried legumes, canned tomatoes, canned tuna or sardines, frozen chicken or minced meat, frozen fish, potatoes, onions, garlic, frozen vegetables). Use at most 1 or 2 ingredients that need refrigeration, avoid bulky perishable ones (large amounts of fresh vegetables, lots of dairy, fresh herbs), and avoid dishes that produce leftovers needing fridge storage. IMPORTANT: at least 3 of the 6 dishes MUST contain meat or fish, using cheap, freezer-friendly or shelf-stable options (frozen chicken, frozen minced meat, sausages, bacon or pancetta, canned tuna, sardines, frozen fish); the rest can be vegetarian. " + (avoid ? "Do NOT repeat these: " + avoid + ". " : "") + "Return ONLY a JSON array in this exact format: [{\"name\":\"...\",\"minutes\":20,\"cost\":\"~2 EUR\",\"fridge\":\"No fridge needed\",\"ingredients\":[\"...\",\"...\"]}]";
+    const list = await askGemini(promptText);
+    if (!Array.isArray(list) || !list.length) throw new Error("empty answer");
+    grid.innerHTML = "";
+    list.forEach(d => {
+      if (!d || !d.name) return;
+      seenSuggestions.push(d.name);
+      grid.appendChild(renderSuggestion(d));
+    });
+  } catch (e) {
+    grid.innerHTML = "";
+    const err = document.createElement("div");
+    err.className = "empty-hint";
+    err.style.gridColumn = "1 / -1";
+    err.textContent = "Couldn't get suggestions (" + e.message + "). Check your API key and try again.";
+    grid.appendChild(err);
+  }
+  btn.disabled = false;
+  btn.textContent = "New ideas";
+}
+
+function renderSuggestion(d) {
+  const card = document.createElement("div");
+  card.className = "sugg-card";
+
+  const h = document.createElement("h3");
+  h.textContent = d.name;
+  card.appendChild(h);
+
+  const chips = document.createElement("div");
+  chips.className = "chips";
+  if (d.minutes) {
+    const c = document.createElement("span");
+    c.className = "chip ui";
+    c.textContent = d.minutes + " min";
+    chips.appendChild(c);
+  }
+  if (d.cost) {
+    const c = document.createElement("span");
+    c.className = "chip cost ui";
+    c.textContent = d.cost;
+    chips.appendChild(c);
+  }
+  if (d.fridge) {
+    const c = document.createElement("span");
+    c.className = "chip ui";
+    c.textContent = "❄ " + d.fridge;
+    chips.appendChild(c);
+  }
+  card.appendChild(chips);
+
+  const ing = document.createElement("div");
+  ing.className = "sugg-ing ui";
+  ing.textContent = Array.isArray(d.ingredients) ? d.ingredients.join(", ") : "";
+  card.appendChild(ing);
+
+  const row = document.createElement("div");
+  row.className = "sugg-add ui";
+  const daySel = document.createElement("select");
+  DAYS.forEach((day, i) => {
+    const o = document.createElement("option");
+    o.value = day; o.textContent = day;
+    if (i === todayIdx) o.selected = true;
+    daySel.appendChild(o);
+  });
+  const mealSel = document.createElement("select");
+  MEALS.forEach(m => {
+    const o = document.createElement("option");
+    o.value = m; o.textContent = m;
+    mealSel.appendChild(o);
+  });
+  const add = document.createElement("button");
+  add.type = "button";
+  add.textContent = "Add";
+  add.addEventListener("click", () => {
+    const day = daySel.value, meal = mealSel.value;
+    const week = active().week;
+    if (!week[day]) week[day] = {};
+    const current = (week[day][meal] || "").trim();
+    week[day][meal] = current ? current + ", " + d.name : d.name;
+    // use exactly the ingredients shown on the card (no new AI call)
+    const ings = (Array.isArray(d.ingredients) ? d.ingredients : [])
+      .map(i => typeof i === "string" ? i : [i && i.name, i && i.quantity].filter(Boolean).join(" — "))
+      .map(t => t.trim())
+      .filter(Boolean);
+    const key = day + "|" + meal;
+    const ids = [];
+    ings.forEach(t => {
+      const id = makeId();
+      ids.push(id);
+      active().shopping.push({ id, text: t, done: false, source: key });
+    });
+    const prev = active().mealMeta[key];
+    active().mealMeta[key] = { text: week[day][meal].trim(), itemIds: (prev ? prev.itemIds : []).concat(ids) };
+    buildGrid();
+    buildShopList();
+    scheduleCostUpdate();
+    setStatus("Added " + d.name + " and its ingredients.");
+  });
+  row.appendChild(daySel);
+  row.appendChild(mealSel);
+  row.appendChild(add);
+  card.appendChild(row);
+  return card;
+}
+
+document.getElementById("suggBtn").addEventListener("click", loadSuggestions);
+
+document.getElementById("accountBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById("accountMenu");
+  menu.classList.contains("open") ? closeAccountMenu() : openAccountMenu();
+});
+document.addEventListener("click", (e) => {
+  const wrap = document.querySelector(".whoami-wrap");
+  if (wrap && !wrap.contains(e.target)) closeAccountMenu();
+});
+document.getElementById("addPersonForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("personInput");
+  const name = input.value.trim();
+  if (!name) return;
+  addProfile(name);
+  input.value = "";
+});
+
+document.getElementById("addForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const input = document.getElementById("itemInput");
+  const text = input.value.trim();
+  if (!text) return;
+  active().shopping.push({ id: makeId(), text, done: false });
+  input.value = "";
+  buildShopList();
+  scheduleCostUpdate();
+});
+
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  setStatus("Saving…");
+  const ok = saveToLocal();
+  setStatus(ok ? "All saved ✓" : "Save failed, please try again.");
+});
+
+document.getElementById("clearShopBtn").addEventListener("click", () => {
+  active().shopping = [];
+  active().mealMeta = {};
+  buildShopList();
+  scheduleCostUpdate();
+  setStatus("Shopping list cleared (remember to save).");
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  active().week = emptyWeek();
+  buildGrid();
+  setStatus("Week cleared (remember to save).");
+});
+
+init();
+window.addEventListener("beforeunload", saveToLocal);
+
+setInterval(() => {
+  const fresh = getTodayIdx();
+  if (fresh !== todayIdx) {
+    todayIdx = fresh;
+    buildGrid();
+  }
+}, 60000);
+</script>
+</body>
+</html>
